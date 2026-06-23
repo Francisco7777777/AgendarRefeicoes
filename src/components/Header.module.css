@@ -1,0 +1,31 @@
+header {
+  background-color: rgb(76, 175, 80);
+  min-width: 100vw;
+  height: 90px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  height: 90px;
+  width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.img {
+  max-width: 100%;
+  padding-left: 15px;
+}
+
+.usuario {
+  text-align: center;
+  width: 200px;
+  padding-right: 30px;
+}
+
+.span_usuario {
+  color: white;
+  font-size: 1.2em;
+}

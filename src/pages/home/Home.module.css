@@ -1,0 +1,63 @@
+.main {
+  width: 70%;
+  margin: 0 auto;
+  height: 775rpx;
+}
+
+.conteine {
+  background-color: white;
+  border-top: solid 30px rgb(76, 175, 80);
+  border-radius: 20px;
+  margin-top: 30px;
+  color: rgb(85, 85, 85);
+}
+
+.titulo {
+  padding-left: 50px;
+  font-size: 1.5em;
+  margin: 10px 0;
+  font-weight: lighter;
+}
+
+.paragrafo {
+  margin-top: 10px;
+  padding: 0 0 30px 50px;
+  font-size: 1.4em;
+}
+
+.conteiner_lista {
+  background-color: white;
+}
+
+.lista {
+  padding: 0;
+  background-color: white;
+}
+
+.linha {
+  border-bottom: 1px solid rgba(53, 53, 53, 0.5);
+  border-radius: 10px;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.div_ordem {
+  width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.8em;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+}
+
+.detalhes_refeicao {
+  width: 300px;
+}
+
+.footer {
+  min-width: 100vw;
+  text-align: center;
+  padding: 10px 0;
+}
