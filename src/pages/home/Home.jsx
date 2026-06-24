@@ -1,28 +1,30 @@
-import useTimerSessao from "../../hooks/useTimerSessao";
+import useTempoSessao from "../../hooks/useTempoSessao.js";
 
 import styles from "./Home.module.css";
 
 import Modal from "../../components/Modal.jsx";
+import Header from "../../components/Header.jsx";
 
 import { useState, useEffect, useRef } from "react";
 
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  useTimerSessao(60);
+  useTempoSessao(60);
   const navegar = useNavigate();
 
   // Estado único para controlar o modal: pode ser null, "reserva" ou "sair"
-  const [modalAtivo, setModalAtivo] = useState(null);
-  console.log("Home " + modalAtivo);
+  const [estadoModal, setEstadoModal] = useState(null);
+
+  console.log("Home " + estadoModal);
 
   // Criamos uma referência para o teclado sempre saber o estado real
-  const modalAtivoRef = useRef(modalAtivo);
+  const modalAtivoRef = useRef(estadoModal);
 
   // Toda vez que o estado mudar, atualizamos a referência
   useEffect(() => {
-    modalAtivoRef.current = modalAtivo;
-  }, [modalAtivo]);
+    modalAtivoRef.current = estadoModal;
+  }, [estadoModal]);
 
   useEffect(() => {
     const tratarCliqueTeclado = (evento) => {
@@ -42,28 +44,27 @@ const Home = () => {
           if (estadoAtualModal === "sair") {
             localStorage.removeItem("auth");
             navegar("/");
-            window.location.reload();
           } else if (estadoAtualModal === "reserva") {
             console.log("Reserva realizada com sucesso!");
-            setModalAtivo(null);
+            null;
           }
         }
 
         if (tecla === "0") {
           console.log("Cancelou com NÃO [0]");
-          setModalAtivo(null); // Fecha o modal
+          setEstadoModal(null); // Fecha o modal
         }
-        return; // Interrompe para não ler as regras de baixo
+        return; // Interrompe para não ler as regras de baixo.
       }
 
       // ==========================================
       // CASO B: SE NENHUM MODAL ESTIVER ABERTO (ABRE MODAL)
       // ==========================================
       if (tecla === "0") {
-        setModalAtivo("sair");
+        setEstadoModal("sair");
       }
       if (tecla === "1") {
-        setModalAtivo("reserva");
+        setEstadoModal("reserva");
       }
     };
 
@@ -78,6 +79,7 @@ const Home = () => {
 
   return (
     <>
+      <Header exibirUsuario={true} />
       <main className={styles.main}>
         <div className={styles.conteine}>
           <h3 className={styles.titulo}>
@@ -91,21 +93,21 @@ const Home = () => {
               <div className={styles.div_ordem}>
                 <p>1</p>
               </div>
-              <div className={styles.detalhes_refeicao}>
-                <p className={styles.nome}>Lanche Manha</p>
+              <div className={styles.conteiner_infor}>
+                <p className={styles.nome}>Lanche Manhã</p>
                 <p className={styles.descricao}>
-                  Paõ com ovos e suco de goiaba
+                  Pão com ovos e suco de goiaba
                 </p>
               </div>
-              <dir className={styles.div_}>
-                <p>Reservado</p>
-                <p className={styles.Prazo}>09:00</p>
+              <dir className={styles.conteiner_status}>
+                <p className={styles.status}>Reservado</p>
+                <p className={styles.prazo}>09:00</p>
               </dir>
             </li>
           </ul>
         </div>
       </main>
-      <Modal tipo={modalAtivo} />
+      <Modal estado={estadoModal} />
     </>
   );
 };

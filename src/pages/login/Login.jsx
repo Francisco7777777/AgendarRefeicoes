@@ -6,6 +6,8 @@ import useAuthServices from "../../services/useAuthServices";
 
 import { useNavigate } from "react-router-dom";
 
+import Header from "../../components/Header";
+
 const Login = () => {
   // Definição de Referências e Estados
   const matriculaRef = useRef(null);
@@ -155,6 +157,7 @@ const Login = () => {
   // ==========================================
   return (
     <>
+      <Header />
       <main className={styles.main}>
         <div className={styles.div_texto}>
           <h2> Bem vindo(a)!</h2>

@@ -1,15 +1,15 @@
 import styles from "./Modal.module.css";
 
-const Modal = ({ tipo }) => {
-  if (!tipo) return null;
+const Modal = ({ estado }) => {
+  if (!estado) return null;
 
-  console.log("modal " + tipo);
+  console.log("modal " + estado);
 
   return (
     <div className={styles.conteiner}>
       <div className={styles.conteudo}>
         <div>
-          {tipo === "sair" ? (
+          {estado === "sair" ? (
             <p className={styles.menssagem}>Confirmar saída?</p>
           ) : (
             <p className={styles.menssagem}>

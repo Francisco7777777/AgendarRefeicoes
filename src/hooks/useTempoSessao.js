@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { toast, Slide } from "react-toastify";
 
 /**
- * Hook Customizado: useTimerSessaoTotem
- * Finalidade: Controlar o tempo limite de sessão de um aluno no Totem e avisar a cada minuto.
+ * Hook Customizado: useTimerSessao
+ * Finalidade: Controlar o tempo limite de sessão de um aluno e avisar a cada minuto.
  * @param {number} minutos - Tempo de duração da sessão
  */
-export default function useTimerSessao(minutos) {
+export default function useTempoSessao(minutos) {
   const navegar = useNavigate();
 
   useEffect(() => {
@@ -47,6 +47,8 @@ export default function useTimerSessao(minutos) {
 
         localStorage.removeItem("auth");
         navegar("/");
+
+        /* ***> É o equivalente a o usuário pressionar: F5 ou clicar no botão de atualizar do navegador. */
         window.location.reload();
       }
     }, 1000);

@@ -1,6 +1,14 @@
 import styles from "./Header.module.css";
 
-const Header = ({ exibirUsuario, nomeUsuario }) => {
+const Header = ({ exibirUsuario }) => {
+  let nomeUsuario = "";
+
+  if (exibirUsuario) {
+    const authString = localStorage.getItem("auth");
+    const authData = authString ? JSON.parse(authString) : null;
+    nomeUsuario = authData?.user?.nome || "Aluno";
+  }
+
   return (
     <header className={styles.header}>
       <div className={styles.logo}>
@@ -8,7 +16,7 @@ const Header = ({ exibirUsuario, nomeUsuario }) => {
       </div>
       <div className={styles.usuario}>
         {exibirUsuario && (
-          <p className={styles.span_usuario}>Óla, {nomeUsuario}</p>
+          <p className={styles.span_usuario}>Olá, {nomeUsuario}</p>
         )}
       </div>
     </header>
