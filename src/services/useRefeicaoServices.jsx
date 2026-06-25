@@ -1,48 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast, Slide } from "react-toastify";
 
 /**
- * Hook Customizado: useRefeicoesAluno
- * Finalidade: Fazer uma requisição HTTP GET para buscar as refeições de um aluno específico.
- * @param {string|number} idAluno - O ID ou Matrícula do aluno logado
+ * Hook Customizado: useRefeicoesServices
+ * Responsabilidades:
+ *  1. Buscar a lista de refeições disponíveis para o aluno (GET)
+ *  2. Agendar uma refeição escolhida pelo aluno (POST)
+ *
+ * @param {string|number} idAluno - ID do aluno logado
  */
 export default function useRefeicoesServices(idAluno) {
   const [refeicoes, setRefeicoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
+  // ==========================================
+  // BUSCA DE REFEIÇÕES (GET)
+  // ==========================================
   useEffect(() => {
-    // Se não houver ID do aluno, não faz a requisição
     if (!idAluno) return;
 
     const buscarRefeicoes = async () => {
       setCarregando(true);
       try {
-        // Método HTTP GET simulado apontando para a API do SISREF
-        // Passamos o idAluno na própria URL (Parâmetro de Rota)
+        // CORREÇÃO: a URL anterior tinha uma aspa dupla sobrando no início
+        // da template string → `"http://...` causaria fetch para uma URL inválida.
         const resposta = await fetch(
-          `https://sisref.ifce.edu.br/api/refeicoes/${idAluno}`,
+          `http://localhost:3000/api/refeicoes/${idAluno}`,
           {
-            method: "GET", // <--- O Método HTTP solicitado
+            method: "GET",
             headers: {
               "Content-Type": "application/json",
-              // Geralmente sistemas como o SISREF exigem o token guardado no localStorage
-              Authorization: `Bearer ${localStorage.getItem("token_sisref")}`,
             },
           },
         );
 
         if (!resposta.ok) {
-          throw new Error("Erro ao buscar refeições!!!");
+          throw new Error("Erro ao buscar refeições.");
         }
 
         const dados = await resposta.json();
-
-        // Guarda os dados das refeições recebidas no estado do React
         setRefeicoes(dados);
       } catch (erro) {
         console.error("Erro na requisição:", erro);
-
-        // Exibe um alerta visual amigável usando o react-toastify
         toast.error(
           "Não foi possível carregar suas refeições. Tente novamente!",
           {
@@ -57,8 +56,55 @@ export default function useRefeicoesServices(idAluno) {
     };
 
     buscarRefeicoes();
-  }, [idAluno]); // O useEffect roda novamente caso o idAluno mude
+  }, [idAluno]);
 
-  // Retorna os dados das refeições e o status de carregamento para o componente visual usar
-  return { refeicoes, carregando };
+  // ==========================================
+  // AGENDAMENTO DE REFEIÇÃO (POST)
+  // Centralizado aqui para manter toda a lógica de rede em um único lugar.
+  // A Home apenas chama esta função — sem conhecer detalhes da requisição.
+  // ==========================================
+  const agendarRefeicao = useCallback(
+    async (refeicao) => {
+      try {
+        const resposta = await fetch(
+          "http://localhost:3000/agendamento/criar",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              idAluno,
+              idRefeicao: refeicao.id,
+            }),
+          },
+        );
+
+        const resultado = await resposta.json();
+
+        if (resultado.success) {
+          console.log("Agendamento realizado:", resultado);
+          toast.success("Refeição agendada com sucesso!", {
+            position: "top-right",
+            autoClose: 3000,
+            transition: Slide,
+          });
+        } else {
+          toast.error("Não foi possível agendar. Tente novamente.", {
+            position: "top-right",
+            autoClose: 4000,
+            transition: Slide,
+          });
+        }
+      } catch (erro) {
+        console.error("Erro ao agendar refeição:", erro);
+        toast.error("Servidor indisponível. Tente novamente.", {
+          position: "top-right",
+          autoClose: 4000,
+          transition: Slide,
+        });
+      }
+    },
+    [idAluno],
+  );
+
+  return { refeicoes, carregando, agendarRefeicao };
 }

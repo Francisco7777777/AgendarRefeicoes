@@ -14,7 +14,7 @@ const Home = () => {
   // ==========================================
   // SESSÃO E NAVEGAÇÃO
   // ==========================================
-  useTempoSessao(60);
+  useTempoSessao(2);
   const navegar = useNavigate();
   const { logout } = useAuthServices();
 
@@ -30,21 +30,23 @@ const Home = () => {
     aluno?.situacao === "Regular" || aluno?.situacao === "Ativo";
 
   // ==========================================
-  // REFEIÇÕES (dados dinâmicos da API)
+  // REFEIÇÕES (dados e ações via hook)
+  // agendarRefeicao agora vem do hook — a Home não conhece detalhes da requisição.
   // ==========================================
-  // O hook busca as refeições pelo ID do aluno logado
-  const { refeicoes, carregando } = useRefeicoesServices(aluno?.id);
+  const { refeicoes, carregando, agendarRefeicao } = useRefeicoesServices(
+    aluno?.id,
+  );
 
   // ==========================================
   // ESTADO DO MODAL
-  // ==========================================
   // null         → nenhum modal aberto
   // "sair"       → modal de confirmação de saída
   // { ...dados } → modal de agendamento com os dados da refeição escolhida
+  // ==========================================
   const [estadoModal, setEstadoModal] = useState(null);
 
-  // Ref espelho: permite que o listener de teclado (closure) leia
-  // o valor atual do estado sem precisar ser recriado a cada render.
+  // Ref espelho: permite que closures (listeners de teclado) leiam
+  // o valor atual do estado sem precisar recriar o listener.
   const modalAtivoRef = useRef(estadoModal);
   useEffect(() => {
     modalAtivoRef.current = estadoModal;
@@ -57,42 +59,7 @@ const Home = () => {
   }, [refeicoes]);
 
   // ==========================================
-  // FUNÇÃO DE AGENDAMENTO
-  // Declarada antes do useCallback que a referencia.
-  // ==========================================
-  const agendarRefeicao = useCallback(
-    async (refeicao) => {
-      try {
-        const resposta = await fetch(
-          "http://localhost:3000/agendamento/criar",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              idAluno: aluno?.id,
-              idRefeicao: refeicao.id,
-            }),
-          },
-        );
-
-        const resultado = await resposta.json();
-
-        if (resultado.success) {
-          console.log("Agendamento realizado:", resultado);
-        } else {
-          alert("Não foi possível agendar. Tente novamente.");
-        }
-      } catch (erro) {
-        console.error("Erro ao agendar refeição:", erro);
-        alert("Servidor indisponível. Tente novamente.");
-      }
-    },
-    [aluno?.id],
-  );
-
-  // ==========================================
   // CALLBACK DE RESPOSTA DO MODAL
-  // Declarado após agendarRefeicao para poder referenciá-la com segurança.
   // ==========================================
   const pegarEscolhaUsuario = useCallback(
     (escolha) => {
@@ -100,25 +67,25 @@ const Home = () => {
 
       if (escolha === "sim") {
         if (modalAtual === "sair") {
-          // FLUXO DE SAÍDA: limpa sessão e vai para o Login
+          // FLUXO DE SAÍDA: limpa sessão e redireciona para o Login
           logout(navegar);
-          return; // O modal será desmontado pelo redirect; não precisa fechar.
+          return; // O redirect desmonta o componente; não precisa fechar o modal.
         }
 
         if (modalAtual && typeof modalAtual === "object") {
-          // FLUXO DE AGENDAMENTO: envia dados ao backend
+          // FLUXO DE AGENDAMENTO: delega inteiramente ao hook
           agendarRefeicao(modalAtual);
         }
       }
 
-      // "não" ou após agendar: fecha o modal
+      // "não" ou após confirmar agendamento: fecha o modal
       setEstadoModal(null);
     },
     [navegar, logout, agendarRefeicao],
   );
 
   // ==========================================
-  // LISTENER GLOBAL DE TECLADO (Home)
+  // LISTENER GLOBAL DE TECLADO
   // ==========================================
   useEffect(() => {
     const tratarCliqueTeclado = (evento) => {
@@ -126,7 +93,7 @@ const Home = () => {
       const modalAtivo = modalAtivoRef.current;
 
       // Com qualquer modal aberto, a Home não processa teclas —
-      // o próprio Modal.jsx cuida do [1] e [0].
+      // o Modal.jsx assume o controle do [1] e do [0].
       if (modalAtivo !== null) return;
 
       // [0] → abre modal de saída
@@ -135,14 +102,11 @@ const Home = () => {
         return;
       }
 
-      // [1–9] → tenta abrir modal de agendamento para a refeição de índice (tecla - 1)
+      // [1–9] → abre modal de agendamento para a refeição do índice correspondente
       const indice = parseInt(tecla, 10);
       if (!isNaN(indice) && indice >= 1 && indice <= 9) {
-        const refeicoesAtuais = refeicoesRef.current;
-        const refeicaoEscolhida = refeicoesAtuais[indice - 1];
-
+        const refeicaoEscolhida = refeicoesRef.current[indice - 1];
         if (refeicaoEscolhida) {
-          // Passa o objeto completo da refeição como estado do modal
           setEstadoModal(refeicaoEscolhida);
         }
       }
@@ -150,7 +114,7 @@ const Home = () => {
 
     window.addEventListener("keydown", tratarCliqueTeclado);
     return () => window.removeEventListener("keydown", tratarCliqueTeclado);
-  }, []); // Array vazio: os refs garantem acesso ao estado atual sem recriar o listener
+  }, []); // Array vazio intencional: refs garantem acesso ao estado atual.
 
   // ==========================================
   // RENDERIZAÇÃO
@@ -182,7 +146,6 @@ const Home = () => {
               {refeicoes.map((refeicao, index) => (
                 <li key={refeicao.id} className={styles.linha}>
                   <div className={styles.div_ordem}>
-                    {/* Exibe a tecla que o aluno deve pressionar */}
                     <p>{index + 1}</p>
                   </div>
                   <div className={styles.conteiner_infor}>
