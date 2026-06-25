@@ -6,18 +6,15 @@ export default function useAuthServices() {
   /**
    * FUNÇÃO DE LOGIN
    * Recebe os dados do formulário e envia para o servidor.
-   * @param {Object} dados
+   * @param {Object} dados - { matricula, codigo_refeitorio }
    */
-
   const login = (dados) => {
     setAuthLoading(true);
 
     const { matricula, codigo_refeitorio } = dados;
 
-    // Monta a URL de busca rápida com os parâmetros (Query Params)
     const url = `http://localhost:3000/aluno/buscar?matricula=${matricula}&codigo=${codigo_refeitorio}`;
 
-    // Dispara a requisição GET para o backend
     fetch(url, {
       method: "GET",
       headers: {
@@ -26,22 +23,19 @@ export default function useAuthServices() {
     })
       .then((response) => response.json())
       .then((result) => {
-        // Se o backend encontrar o aluno com sucesso
         if (result.success && result.body) {
           console.log("Acesso autorizado para:", result.body.nome);
 
-          // Salva os dados do aluno no localStorage no formato esperado pelo seu app
           localStorage.setItem(
             "auth",
             JSON.stringify({
-              user: result.body, // Aqui ficam guardados nome, matrícula, etc.
+              user: result.body,
             }),
           );
 
-          // Redireciona ou atualiza a página para entrar no sistema
+          // Reload é seguro aqui: aciona o useEffect do Login que redireciona para /home
           window.location.reload();
         } else {
-          // Se o backend retornar false ou não encontrar o documento
           alert("Erro: Matrícula ou Código do refeitório incorretos!");
         }
       })
@@ -55,11 +49,18 @@ export default function useAuthServices() {
   };
 
   /**
-   * FUNÇÃO DE LOGOUT (SAIR)
-   * Apaga a sessão do usuário de forma simples e rápida.
+   * FUNÇÃO DE LOGOUT
+   * Remove a sessão e executa o callback de navegação fornecido pelo componente.
+   * O hook não pode chamar useNavigate() diretamente porque
+   * useAuthServices é usado também na página de Login, que pode estar fora
+   * do contexto do Router em alguns cenários de teste. Receber o navegar
+   * como parâmetro mantém o hook puro e reutilizável.
+   *
+   * @param {Function} navegar - Função navigate() do React Router
    */
-  const logout = () => {
+  const logout = (navegar) => {
     localStorage.removeItem("auth");
+    navegar("/");
   };
 
   return { login, logout, authLoading };
