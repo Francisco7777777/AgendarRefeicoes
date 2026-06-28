@@ -14,7 +14,7 @@ const Home = () => {
   // ==========================================
   // SESSÃO E NAVEGAÇÃO
   // ==========================================
-  useTempoSessao(2);
+  useTempoSessao(10);
   const navegar = useNavigate();
   const { logout } = useAuthServices();
 
@@ -58,6 +58,20 @@ const Home = () => {
     refeicoesRef.current = refeicoes;
   }, [refeicoes]);
 
+  // Ref espelho para situação do aluno.
+  // Sem isso, o listener ignora alunos irregulares e abre o modal mesmo assim.
+  const situacaoRegularRef = useRef(situacaoRegular);
+  useEffect(() => {
+    situacaoRegularRef.current = situacaoRegular;
+  }, [situacaoRegular]);
+
+  // Ref espelho para o estado de carregamento.
+  // Sem isso, o listener pode abrir o modal antes das refeições chegarem da API.
+  const carregandoRef = useRef(carregando);
+  useEffect(() => {
+    carregandoRef.current = carregando;
+  }, [carregando]);
+
   // ==========================================
   // CALLBACK DE RESPOSTA DO MODAL
   // ==========================================
@@ -96,11 +110,14 @@ const Home = () => {
       // o Modal.jsx assume o controle do [1] e do [0].
       if (modalAtivo !== null) return;
 
-      // [0] → abre modal de saída
+      // [0] → abre modal de saída (sempre permitido, independente da situação)
       if (tecla === "0") {
         setEstadoModal("sair");
         return;
       }
+
+      // GUARD: bloqueia teclas de refeição se situação irregular ou ainda carregando
+      if (!situacaoRegularRef.current || carregandoRef.current) return;
 
       // [1–9] → abre modal de agendamento para a refeição do índice correspondente
       const indice = parseInt(tecla, 10);

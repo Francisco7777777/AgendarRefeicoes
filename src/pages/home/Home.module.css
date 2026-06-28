@@ -79,3 +79,11 @@
   padding-left: 0;
   width: 180px;
 }
+
+.situacao_irregular,
+.carregando,
+.sem_refeicoes {
+  color: rgb(76, 175, 80);
+  font-size: 2em;
+  padding: 20px 0 0 30px;
+}

@@ -52,7 +52,7 @@ const Login = () => {
 
     if (matricula.length !== 14) {
       setErroMatricula(
-        `A matrícula deve ter 13 dígitos! (Digitado: ${matricula.length})`,
+        `A matrícula deve ter 14 dígitos! (Digitado: ${matricula.length})`,
       );
       focarNoFinal(matriculaRef.current);
       return false;
@@ -77,9 +77,9 @@ const Login = () => {
       return false;
     }
 
-    if (codigo.length !== 4) {
+    if (codigo.length !== 3) {
       setErroCodigo(
-        `O código deve ter 4 dígitos! (Digitado: ${codigo.length})`,
+        `O código deve ter 3 dígitos! (Digitado: ${codigo.length})`,
       );
       focarNoFinal(codigoRef.current);
       return false;
