@@ -77,9 +77,9 @@ const Login = () => {
       return false;
     }
 
-    if (codigo.length !== 3) {
+    if (codigo.length !== 3 && codigo.length !== 4) {
       setErroCodigo(
-        `O código deve ter 3 dígitos! (Digitado: ${codigo.length})`,
+        `O código deve ter 3 ou 4 dígitos! (Digitado: ${codigo.length})`,
       );
       focarNoFinal(codigoRef.current);
       return false;
@@ -111,10 +111,31 @@ const Login = () => {
     focarNoFinal(matriculaRef.current);
   }, []);
 
+  // Remove o último caractere do input com foco no momento.
+  // Ativado pela tecla [-]
+  function apagarUltimoCaractere() {
+    const inputAtivo = document.activeElement;
+
+    // Só age se o foco estiver em um dos inputs do formulário
+    if (
+      inputAtivo === matriculaRef.current ||
+      inputAtivo === codigoRef.current
+    ) {
+      inputAtivo.value = inputAtivo.value.slice(0, -1);
+      focarNoFinal(inputAtivo);
+    }
+  }
+
   // ==========================================
   // EVENTOS GATILHADOS PELO USUÁRIO (Ações do Teclado)
   // ==========================================
   const manipularMatriculaKeyDown = (e) => {
+    if (e.key === "-") {
+      e.preventDefault();
+      apagarUltimoCaractere();
+      return;
+    }
+
     if (e.key === "Enter") {
       e.preventDefault();
       setErroMatricula("");
@@ -127,6 +148,12 @@ const Login = () => {
   };
 
   const manipularCodigoKeyDown = (e) => {
+    if (e.key === "-") {
+      e.preventDefault();
+      apagarUltimoCaractere();
+      return;
+    }
+
     if (e.key === "Enter") {
       e.preventDefault();
       setErroMatricula("");

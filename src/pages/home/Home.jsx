@@ -2,6 +2,7 @@ import styles from "./Home.module.css";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast, Zoom } from "react-toastify";
 
 import useTempoSessao from "../../hooks/useTempoSessao.js";
 import useAuthServices from "../../services/useAuthServices.jsx";
@@ -123,9 +124,25 @@ const Home = () => {
       const indice = parseInt(tecla, 10);
       if (!isNaN(indice) && indice >= 1 && indice <= 9) {
         const refeicaoEscolhida = refeicoesRef.current[indice - 1];
-        if (refeicaoEscolhida) {
-          setEstadoModal(refeicaoEscolhida);
+        if (!refeicaoEscolhida) return;
+
+        // REGRA DE NEGÓCIO: refeição já reservada não pode abrir o modal
+        // de agendamento novamente — apenas avisa o usuário.
+        if (refeicaoEscolhida.status === "reservada") {
+          toast.warn("Esta refeição já está reservada!", {
+            position: "top-center",
+            theme: "light",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: false,
+            transition: Zoom,
+          });
+          return;
         }
+
+        setEstadoModal(refeicaoEscolhida);
       }
     };
 
@@ -170,7 +187,15 @@ const Home = () => {
                     <p className={styles.descricao}>{refeicao.descricao}</p>
                   </div>
                   <div className={styles.conteiner_status}>
-                    <p className={styles.status}>{refeicao.status}</p>
+                    <p
+                      className={`${styles.status} ${
+                        refeicao.status === "reservada"
+                          ? styles.status_reservada
+                          : styles.status
+                      }`}
+                    >
+                      {refeicao.status}
+                    </p>
                     <p className={styles.prazo}>{refeicao.horario}</p>
                   </div>
                 </li>

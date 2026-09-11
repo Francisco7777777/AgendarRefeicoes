@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast, Slide } from "react-toastify";
+import { toast, Zoom } from "react-toastify";
 
 /**
  * Hook Customizado: useRefeicoesServices
@@ -15,48 +15,57 @@ export default function useRefeicoesServices(idAluno) {
 
   // ==========================================
   // BUSCA DE REFEIÇÕES (GET)
+  // Extraída com useCallback para poder ser chamada
+  // tanto no carregamento inicial (useEffect) quanto
+  // depois de um agendamento bem-sucedido (refresh).
   // ==========================================
-  useEffect(() => {
+  const buscarRefeicoes = useCallback(async () => {
     if (!idAluno) return;
 
-    const buscarRefeicoes = async () => {
-      setCarregando(true);
-      try {
-        // CORREÇÃO: a URL anterior tinha uma aspa dupla sobrando no início
-        // da template string → `"http://...` causaria fetch para uma URL inválida.
-        const resposta = await fetch(
-          `http://localhost:3000/api/refeicoes/${idAluno}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+    setCarregando(true);
+    try {
+      const resposta = await fetch(
+        `http://localhost:3000/api/aluno/${idAluno}/refeicoes`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+        },
+      );
 
-        if (!resposta.ok) {
-          throw new Error("Erro ao buscar refeições.");
-        }
-
-        const dados = await resposta.json();
-        setRefeicoes(dados);
-      } catch (erro) {
-        console.error("Erro na requisição:", erro);
-        toast.error(
-          "Não foi possível carregar suas refeições. Tente novamente!",
-          {
-            position: "top-right",
-            autoClose: 4000,
-            transition: Slide,
-          },
-        );
-      } finally {
-        setCarregando(false);
+      if (!resposta.ok) {
+        throw new Error("Erro ao buscar refeições.");
       }
-    };
 
-    buscarRefeicoes();
+      const dados = await resposta.json();
+      setRefeicoes(dados.refeicoes ?? []);
+    } catch (erro) {
+      console.error("Erro na requisição: ", erro);
+      toast.error("Não foi possível carregar suas refeições!", {
+        position: "top-center",
+        theme: "light",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: false,
+        transition: Zoom,
+      });
+    } finally {
+      setCarregando(false);
+    }
   }, [idAluno]);
+
+  // Carrega a lista assim que houver um idAluno (ou quando ele mudar).
+  // A chamada é adiada com queueMicrotask para que o setState feito
+  // dentro de buscarRefeicoes não ocorra de forma síncrona dentro do
+  // corpo do efeito (evita o aviso react-hooks/set-state-in-effect).
+  useEffect(() => {
+    queueMicrotask(() => {
+      buscarRefeicoes();
+    });
+  }, [buscarRefeicoes]);
 
   // ==========================================
   // AGENDAMENTO DE REFEIÇÃO (POST)
@@ -67,13 +76,13 @@ export default function useRefeicoesServices(idAluno) {
     async (refeicao) => {
       try {
         const resposta = await fetch(
-          "http://localhost:3000/agendamento/criar",
+          "http://localhost:3000/api/agendamento/criar",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               idAluno,
-              idRefeicao: refeicao.id,
+              idCardapio: refeicao.id,
             }),
           },
         );
@@ -83,23 +92,55 @@ export default function useRefeicoesServices(idAluno) {
         if (resultado.success) {
           console.log("Agendamento realizado:", resultado);
           toast.success("Refeição agendada com sucesso!", {
-            position: "top-right",
+            position: "top-center",
             autoClose: 3000,
-            transition: Slide,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: false,
+            transition: Zoom,
           });
+
+          // ------------------------------------------
+          // Atualiza SOMENTE o item agendado no estado local,
+          // usando os dados que o próprio POST já retornou
+          // (resultado.body). Evita um novo GET completo e o
+          // flash de "Carregando refeições..." na tela — a
+          // transição de status fica suave, controlada via CSS.
+          // ------------------------------------------
+          setRefeicoes((atual) =>
+            atual.map((item) =>
+              item.id === refeicao.id
+                ? {
+                    ...item,
+                    status: "reservada",
+                    agendamentoId: resultado.body.id,
+                    reservadoEm: resultado.body.criadoEm,
+                  }
+                : item,
+            ),
+          );
         } else {
-          toast.error("Não foi possível agendar. Tente novamente.", {
-            position: "top-right",
+          toast.warn("Não foi possível agendar! ", {
+            position: "top-center",
             autoClose: 4000,
-            transition: Slide,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: false,
+            transition: Zoom,
           });
         }
       } catch (erro) {
-        console.error("Erro ao agendar refeição:", erro);
-        toast.error("Servidor indisponível. Tente novamente.", {
-          position: "top-right",
+        console.error("Erro ao agendar refeição: ", erro);
+        toast.error("Servidor indisponível!", {
+          position: "top-center",
           autoClose: 4000,
-          transition: Slide,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          transition: Zoom,
         });
       }
     },

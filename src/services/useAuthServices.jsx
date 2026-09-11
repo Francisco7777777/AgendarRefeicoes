@@ -1,40 +1,57 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ← adiciona este import
+import { useNavigate } from "react-router-dom";
+import { toast, Zoom } from "react-toastify";
 
 export default function useAuthServices() {
   const [authLoading, setAuthLoading] = useState(false);
-  const navegar = useNavigate(); // ← adiciona esta linha
+  const navegar = useNavigate();
 
-  const login = (dados) => {
-    setAuthLoading(true);
+  const login = async (dados) => {
+    try {
+      const { matricula, codigo_refeitorio } = dados;
+      const url = `http://localhost:3000/api/aluno/buscar?matricula=${matricula}&codigo_refeitorio=${codigo_refeitorio}`;
 
-    const { matricula, codigo_refeitorio } = dados;
-    const url = `http://localhost:3000/aluno/buscar?matricula=${matricula}&codigo=${codigo_refeitorio}`;
-
-    fetch(url, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.success && result.body) {
-          console.log("Acesso autorizado para:", result.body.nome);
-
-          localStorage.setItem("auth", JSON.stringify({ user: result.body }));
-
-          // CORREÇÃO: navegar diretamente, sem reload()
-          navegar("/home");
-        } else {
-          alert("Erro: Matrícula ou Código do refeitório incorretos!");
-        }
-      })
-      .catch((error) => {
-        console.error("Erro ao conectar com o servidor do Totem:", error);
-        alert("Servidor indisponível no momento.");
-      })
-      .finally(() => {
-        setAuthLoading(false);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
       });
+
+      const result = await response.json();
+
+      if (result.success && result.body) {
+        console.log("Acesso autorizado para:", result.body.nome);
+        localStorage.setItem("auth", JSON.stringify({ user: result.body }));
+        navegar("/home");
+      } else {
+        toast.warn("Matrícula ou Código incorretos!", {
+          theme: "light",
+          position: "top-center",
+          progress: 0,
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          transition: Zoom,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao conectar com o servidor do Totem:", error);
+
+      toast.error("Servidor indisponível no momento.", {
+        theme: "light",
+        position: "top-center",
+        progress: 0,
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: false,
+        transition: Zoom,
+      });
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const logout = (navegar) => {
